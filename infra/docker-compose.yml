@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:16-alpine
+    image: pgvector/pgvector:pg16
     container_name: openrecords-postgres
     restart: unless-stopped
     environment:
@@ -31,17 +31,43 @@ services:
       postgres:
         condition: service_healthy
 
-
   mailhog:
     image: mailhog/mailhog:latest
     container_name: openrecords-mailhog
     restart: unless-stopped
     ports:
-      - "1025:1025"   # SMTP — Spring Boot sends mail to this port
-      - "8025:8025"   # Web UI — view captured emails at http://localhost:8025
+      - "1025:1025"
+      - "8025:8025"
+
+  ai-service:
+    build:
+      context: ../ai-service
+      dockerfile: Dockerfile
+    container_name: openrecords-ai-service
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-openrecords}:${POSTGRES_PASSWORD:-openrecords_dev_password}@postgres:5432/${POSTGRES_DB:-openrecords}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-sonnet-4-20250514}
+      API_BASE_URL: ${API_BASE_URL:-http://host.docker.internal:8080}
+      API_SERVICE_TOKEN: ${API_SERVICE_TOKEN:-}
+      DEBUG: ${DEBUG:-true}
+    ports:
+      - "8001:8001"
+    volumes:
+      - ../ai-service/app:/app/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    develop:
+      watch:
+        - action: sync
+          path: ../ai-service/app
+          target: /app/app
 
 volumes:
   openrecords_postgres_data:
+    external: true
     name: openrecords_postgres_data
   pgadmin_data:
     name: openrecords_pgadmin_data
