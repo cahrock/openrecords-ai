@@ -97,4 +97,8 @@ openrecords:
   
   tracking-number:
     prefix: FOIA
+  
+  ai-service:
+    base-url: ${OPENRECORDS_AI_SERVICE_URL:http://localhost:8001}
+    timeout-seconds: 30
 
