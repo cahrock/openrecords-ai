@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from app.config import settings
-from app.routers import health
+from app.routers import health, classification
 
 app = FastAPI(
     title=settings.app_name,
@@ -10,6 +10,7 @@ app = FastAPI(
 )
 
 app.include_router(health.router, prefix="/api/v1", tags=["health"])
+app.include_router(classification.router, prefix="/api/v1", tags=["classification"])
 
 
 @app.get("/")
